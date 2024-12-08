@@ -13,11 +13,18 @@ use App\Http\Controllers\GeographicDataController;
 |
 */
 
-Route::view('/', 'map');
+Route::view('/', 'map')->name('home');
 
-
-
-Route::get('/geographic', [GeographicDataController::class, 'index'])->name('geographic.index');
 Route::get('/geographic/data', [GeographicDataController::class, 'getAllData']);
+
+// Route to create new geographic data
 Route::post('/geographic', [GeographicDataController::class, 'store']);
+
+// Route to update geographic data
+Route::put('/geographic/edit/{id}', [GeographicDataController::class, 'update'])->name('geographic.update');
+
+
+Route::get('/geographic/edit/{id}', [GeographicDataController::class, 'edit']);
+
+// Route to delete geographic data
 Route::delete('/geographic/{id}', [GeographicDataController::class, 'destroy']);

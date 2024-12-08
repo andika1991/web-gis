@@ -17,7 +17,7 @@ class GeographicData extends Model
         'name',
         'type',
         'coordinates',
-        'description',
+        'description','photo',
     ];
 
     // Menentukan tipe kolom yang bertipe JSON
