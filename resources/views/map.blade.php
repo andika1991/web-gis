@@ -8,15 +8,21 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css" />
+    <!-- Leaflet Control Geocoder CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<!-- Leaflet Control Geocoder JS -->
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 
-<div class="container mt-4">
-    <h3>Interactive Map</h3>
-    <div style="width: 100%; height: 500px;" id="map"></div>
-</div>
+    <div class="container mt-4">
+        <h3>Interactive Map with Search Location</h3>
+        <div style="width: 100%; height: 500px;" id="map"></div>
+    </div>
 
 <!-- Edit Modal -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
@@ -56,6 +62,36 @@
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
+    // Add search control
+   // Simpan elemen pencarian sebelumnya
+var previousSearchLayer;
+
+var geocoder = L.Control.geocoder({
+    defaultMarkGeocode: false
+})
+.on('markgeocode', function(e) {
+    // Hapus pencarian sebelumnya jika ada
+    if (previousSearchLayer) {
+        map.removeLayer(previousSearchLayer);
+    }
+
+    var bbox = e.geocode.bbox;
+    var poly = L.polygon([
+        [bbox.getSouthWest().lat, bbox.getSouthWest().lng],
+        [bbox.getNorthWest().lat, bbox.getNorthWest().lng],
+        [bbox.getNorthEast().lat, bbox.getNorthEast().lng],
+        [bbox.getSouthEast().lat, bbox.getSouthEast().lng]
+    ]).addTo(map);
+
+    // Simpan referensi ke layer pencarian saat ini
+    previousSearchLayer = poly;
+
+    map.fitBounds(poly.getBounds()); // Pindahkan peta ke lokasi hasil pencarian
+})
+.addTo(map);
+
+
+
     var drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
@@ -78,9 +114,6 @@
                         geoJsonLayer.addTo(map);
 
                         geoJsonLayer.on('click', function() {
-                            // Zoom to the clicked feature
-                            map.fitBounds(geoJsonLayer.getBounds());
-
                             // Create custom content for the popup with buttons
                             var popupContent = ` 
                                 <b>${item.name}</b><br>
@@ -135,12 +168,16 @@
             });
     }
 
+   
+
+   
     loadMapData();
 
     // Handle new feature creation
     map.on('draw:created', function (e) {
         var layer = e.layer;
         var geoJSONData = layer.toGeoJSON();
+
 
         // Show modal for photo upload
         var modalHtml = `
@@ -211,7 +248,6 @@
         drawnItems.addLayer(layer); // Add layer to map
     });
 </script>
-
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
