@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\GeographicDataController;
+use App\Http\Controllers\CoordinateController;
+use App\Http\Controllers\GeoJsonController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -13,11 +15,5 @@ use App\Http\Controllers\GeographicDataController;
 |
 */
 
-Route::view('/', 'map');
-
-
-
-Route::get('/geographic', [GeographicDataController::class, 'index'])->name('geographic.index');
-Route::get('/geographic/data', [GeographicDataController::class, 'getAllData']);
-Route::post('/geographic', [GeographicDataController::class, 'store']);
-Route::delete('/geographic/{id}', [GeographicDataController::class, 'destroy']);
+Route::resource('coordinates', CoordinateController::class);
+Route::get('/geojson', [GeoJsonController::class, 'index']);
