@@ -2,34 +2,39 @@
 
 @section('content')
 <div class="container">
-    <h3>Edit Geographic Object</h3>
+    <h3>Add New Geographic Object</h3>
 
-    <form action="{{ route('geographic.update', $item->id) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('geographic.save') }}" method="POST" enctype="multipart/form-data">
         @csrf
-        @method('PUT')
 
         <!-- Name Field -->
         <div class="mb-3">
             <label for="name" class="form-label">Name</label>
-            <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $item->name) }}" required>
+            <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required>
         </div>
 
-        <!-- Description Field -->
+        <!-- Type Field -->
         <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
-            <textarea class="form-control" id="description" name="description" rows="3">{{ old('description', $item->description) }}</textarea>
+            <label for="type" class="form-label">Type</label>
+            <select class="form-select" id="type" name="type" required>
+                <option value="Point" {{ old('type') == 'Point' ? 'selected' : '' }}>Point</option>
+                <option value="LineString" {{ old('type') == 'LineString' ? 'selected' : '' }}>LineString</option>
+                <option value="Polygon" {{ old('type') == 'Polygon' ? 'selected' : '' }}>Polygon</option>
+            </select>
         </div>
 
         <!-- Coordinates Field -->
         <div class="mb-3">
             <label for="coordinates" class="form-label">Coordinates (Longitude, Latitude)</label>
-            @php
-                // Extract the coordinates in [longitude, latitude] format
-                $coordinates = json_decode($item->coordinates)->coordinates ?? [0, 0];
-            @endphp
             <input type="text" class="form-control" id="coordinates" name="coordinates"
-                   value="{{ old('coordinates', implode(',', $coordinates)) }}" placeholder="105.24147,-5.37222" required>
+                   value="{{ old('coordinates') }}" placeholder="105.24147,-5.37222" required>
             <small class="text-muted">Input format: longitude,latitude</small>
+        </div>
+
+        <!-- Description Field -->
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3">{{ old('description') }}</textarea>
         </div>
 
         <!-- Photo Upload Field -->
@@ -40,12 +45,11 @@
 
         <!-- Image Preview -->
         <div class="mb-3">
-            <img id="image-preview" src="{{ old('photo', asset('storage/' . $item->photo)) }}" alt="Image Preview"
-                 style="width: 100px; height: 100px; display: block;">
+            <img id="image-preview" src="#" alt="Image Preview" style="width: 100px; height: 100px; display: none;">
         </div>
 
         <!-- Action Buttons -->
-        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="submit" class="btn btn-primary">Save</button>
         <a href="/" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
@@ -62,4 +66,5 @@
         reader.readAsDataURL(event.target.files[0]);
     }
 </script>
+
 @endsection

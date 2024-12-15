@@ -8,12 +8,19 @@ use Illuminate\Support\Facades\Storage;
 
 class GeographicDataController extends Controller
 {
-    public function index()
-    {
-        $data = GeographicData::all();
-        return view('map', compact('data'));
+    public function index(Request $request)
+    {   $search = $request->input('search');
+
+        $data = GeographicData::when($search, function ($query, $search) {
+            $query->where('name', 'LIKE', "%{$search}%");
+        })->paginate(5);
+        return view('map', compact('data','search'));
     }
 
+    public function showAdd()
+    {
+        return view('add');
+    }
     public function store(Request $request)
     {
         $request->validate([
@@ -76,26 +83,78 @@ class GeographicDataController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'coordinates' => 'required|regex:/^[-\d.]+,[-\d.]+$/', // Validate longitude,latitude format
         ]);
-
+    
         // Find the item to update
         $item = GeographicData::findOrFail($id);
-
-        // Update the name and description
+    
+        // Update name and description
         $item->name = $request->input('name');
         $item->description = $request->input('description');
-
-        // If a new photo is uploaded, handle the file upload
+    
+        // Update coordinates in proper format
+        $coordinatesInput = $request->input('coordinates'); // Example: "105.24147,-5.37222"
+        [$longitude, $latitude] = explode(',', $coordinatesInput); // Split by comma
+        $item->coordinates = json_encode([
+            'type' => 'Point',
+            'coordinates' => [(float)$longitude, (float)$latitude],
+        ]);
+    
+        // If a new photo is uploaded, handle file upload
         if ($request->hasFile('photo')) {
             $photoPath = $request->file('photo')->store('geographic_photos', 'public');
             $item->photo = $photoPath;
         }
-
+    
         // Save the updated item
         $item->save();
-
-        // Redirect back to the list of geographic objects
+    
+        // Redirect back with success message
         return redirect()->route('home')->with('success', 'Data updated successfully!');
     }
+
+    public function save(Request $request)
+{
+    $request->validate([
+        'name' => 'required',
+        'type' => 'required|in:Point,LineString,Polygon',
+        'coordinates' => 'required|string',
+        'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+    ]);
+
+    // Handle the photo upload if present
+    $photoPath = null;
+    if ($request->hasFile('photo')) {
+        // Store the photo in the public directory
+        $photoPath = $request->file('photo')->store('photos', 'public');
+    }
+
+    // Process the coordinates input to convert it to the correct format
+    $coordinates = explode(',', $request->coordinates);
+    if (count($coordinates) == 2) {
+        // Assuming the input is in "longitude,latitude" format
+        $coordinatesJson = json_encode([
+            'type' => 'Point',
+            'coordinates' => [floatval($coordinates[0]), floatval($coordinates[1])],
+        ]);
+    } else {
+        // If the format is incorrect, you could either return an error or handle it differently.
+        return redirect()->back()->with('error', 'Invalid coordinates format.');
+    }
+
+    // Create a new geographic data record
+    $data = GeographicData::create([
+        'name' => $request->name,
+        'type' => $request->type,
+        'coordinates' => $coordinatesJson,
+        'description' => $request->description,
+        'photo' => $photoPath,  // Store the photo path in the database
+    ]);
+
+    return redirect()->route('home')->with('success', 'Geographic data added successfully.');
+}
+
+    
     
 }
